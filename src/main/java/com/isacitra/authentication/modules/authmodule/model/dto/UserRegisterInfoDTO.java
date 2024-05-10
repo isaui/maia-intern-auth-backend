@@ -16,5 +16,4 @@ public class UserRegisterInfoDTO implements Serializable {
     private String email;
     private String name;
     private String photoProfile;
-    public UserRegisterInfoDTO(){}
 }

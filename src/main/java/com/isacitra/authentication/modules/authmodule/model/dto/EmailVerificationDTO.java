@@ -14,5 +14,5 @@ public class EmailVerificationDTO implements Serializable {
     private String token;
     private String content;
     private String subject;
-    public EmailVerificationDTO(){}
+    private String name;
 }

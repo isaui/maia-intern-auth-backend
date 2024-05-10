@@ -17,6 +17,6 @@ public class UserInformationDTO implements Serializable {
     private String profilePhoto;
     private String name;
 
-    public UserInformationDTO(){}
+
 
 }

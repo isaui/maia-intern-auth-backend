@@ -10,5 +10,4 @@ import java.io.Serializable;
 public class UserLoginInfoDTO implements Serializable {
     private String identifier;
     private String password;
-    public UserLoginInfoDTO(){}
 }

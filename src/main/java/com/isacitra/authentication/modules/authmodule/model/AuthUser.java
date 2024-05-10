@@ -9,7 +9,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Builder
 @Entity
 public class AuthUser {
     @Id
@@ -19,13 +18,78 @@ public class AuthUser {
     @Column(unique = true)
     private String username;
     private String name;
-    private String selfDescription = "";
+    private String selfDescription;
     @Column(unique = true)
     private String email;
     private  String password;
     private String profilePhoto;
+
     public AuthUser() {
 
+    }
+
+    public static class AuthUserBuilder {
+        private Long userId;
+        private String username;
+        private String name;
+        private String selfDescription;
+        private String email;
+        private String password;
+        private String profilePhoto;
+
+        public AuthUserBuilder userId(Long userId) {
+            this.userId = userId;
+            return this;
+        }
+
+        public AuthUserBuilder username(String username) {
+            this.username = username;
+            return this;
+        }
+
+        public AuthUserBuilder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public AuthUserBuilder selfDescription(String selfDescription) {
+            this.selfDescription = selfDescription;
+            return this;
+        }
+
+        public AuthUserBuilder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public AuthUserBuilder password(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public AuthUserBuilder profilePhoto(String profilePhoto) {
+            this.profilePhoto = profilePhoto;
+            return this;
+        }
+
+        public AuthUser build() {
+            AuthUser authUser = new AuthUser();
+            authUser.setUserId(this.userId);
+            authUser.setUsername(this.username);
+            authUser.setName(this.name);
+            authUser.setSelfDescription(this.selfDescription);
+            authUser.setEmail(this.email);
+            authUser.setPassword(this.password);
+            authUser.setProfilePhoto(this.profilePhoto);
+            return authUser;
+        }
+    }
+
+
+    @PrePersist
+    void preInsert() {
+        if (this.selfDescription == null)
+            this.selfDescription = "";
     }
 
     public static AuthUser fromUserRegisterInfo(UserRegisterInfoDTO info){

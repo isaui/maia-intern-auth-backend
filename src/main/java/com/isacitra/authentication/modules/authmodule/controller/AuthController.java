@@ -123,6 +123,7 @@ public class AuthController {
                             .token(emailAuthenticationProvider.
                                     createEmailAuthenticationToken(
                                             requestBody.get("type").asText(),email))
+                            .name(requestBody.get("name").asText())
                             .build()
             );
         }, virtualExecutor);

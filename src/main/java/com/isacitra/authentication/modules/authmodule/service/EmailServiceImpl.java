@@ -31,7 +31,7 @@ public class EmailServiceImpl implements EmailService{
                     + "<body class=\"font-sans bg-gray-100\">"
                     + "<div class=\"max-w-2xl mx-auto py-8 px-4\">"
                     + "<div class=\"bg-white shadow-md rounded-lg px-8 py-6\">"
-                    + "<h1 class=\"text-2xl font-bold mb-4\">Hai, " + emailVerificationSetting.getSubject() + ".</h1>"
+                    + "<h1 class=\"text-2xl font-bold mb-4\">Hai, " + emailVerificationSetting.getName() + ".</h1>"
                     + "<p>"+ emailVerificationSetting.getContent() +"</p>"
                     + "<p class=\"text-lg bg-indigo-200 rounded px-4 py-2\">" + emailVerificationSetting.getToken()+ "</p>"
                     + "</div>"
