@@ -1,11 +1,9 @@
 package com.isacitra.authentication.modules.authmodule.controller;
 
 import com.isacitra.authentication.common.enums.EmailVerificationType;
+import com.isacitra.authentication.common.enums.URI;
 import com.isacitra.authentication.modules.authmodule.model.AuthUser;
-import com.isacitra.authentication.modules.authmodule.model.dto.ChangePasswordInfoDTO;
-import com.isacitra.authentication.modules.authmodule.model.dto.EmailVerificationDTO;
-import com.isacitra.authentication.modules.authmodule.model.dto.UserLoginInfoDTO;
-import com.isacitra.authentication.modules.authmodule.model.dto.UserRegisterInfoDTO;
+import com.isacitra.authentication.modules.authmodule.model.dto.*;
 import com.isacitra.authentication.modules.authmodule.provider.EmailVerificationProvider;
 import com.isacitra.authentication.modules.authmodule.provider.JwtProvider;
 import com.isacitra.authentication.common.provider.RedisProvider;
@@ -15,7 +13,6 @@ import com.isacitra.authentication.common.util.ResponseHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -91,51 +88,43 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Object> postRegister(@RequestBody UserRegisterInfoDTO info){
-        Map<String, Object> data = new HashMap<>();
-        try{
-            if(! emailAuthenticationProvider.isEmailVerified(
-                    EmailVerificationType.REGISTER.getType(), info.getEmail())){
-                return  ResponseHandler.generateResponse("Email belum diverifikasi",
-                        HttpStatus.UNAUTHORIZED, data);
-            }
-            authService.register(info);
-        }catch (IllegalArgumentException exception){
-            return  ResponseHandler.generateResponse("password yang dimasukkan tidak sesuai!",
-                    HttpStatus.UNAUTHORIZED, data);
-        }catch (DuplicateKeyException exception){
-            return  ResponseHandler.generateResponse(exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, data);
-        }
-        data.put("token", getToken(info.getEmail(), info.getPassword()));
-        return ResponseHandler.generateResponse("Berhasil register", HttpStatus.ACCEPTED, data);
-    }
-
-    //done
-    @PostMapping("/email-verification/create")
-    public  ResponseEntity<Object> createEmailVerification(@RequestBody JsonNode requestBody){
+    public ResponseEntity<Object> handleCachingRegisterBeforeVerification(@RequestBody  UserRegisterInfoDTO info){
+        Map<String, Object> response = new HashMap<>();
+        String message = String.format
+                ("A confirmation link has been sent to your email address %s. Click the link to verify your account and unlock full access. ", info.getEmail());
+        String url = emailAuthenticationProvider.createRegisterURI(info);
         CompletableFuture.runAsync(()->{
-            String email = requestBody.get("email").asText();
-            emailService.sendEmailVerification(
-                    EmailVerificationDTO.builder().
-                            recipientEmail(email)
-                            .subject(requestBody.get("subject").asText())
-                            .content(requestBody.get("content").asText())
-                            .token(emailAuthenticationProvider.
-                                    createEmailAuthenticationToken(
-                                            requestBody.get("type").asText(),email))
-                            .redirectLink("redirectLink")
-                            .buttonTitle("buttonTitle")
-                            .name(requestBody.get("name").asText())
-                            .build()
-            );
-        }, virtualExecutor);
-        String successMessage = "Silahkan cek email anda untuk verifikasi";
-        Map<String,Object> data = new HashMap<>();
-        data.put("message", successMessage );
-        return  ResponseHandler.generateResponse(successMessage, HttpStatus.ACCEPTED, data);
+            RegisterEmailVerificationDTO emailVerificationDTO =
+                    RegisterEmailVerificationDTO.builder()
+                            .recipientEmail(info.getEmail())
+                            .name(info.getName())
+                            .identifier(url)
+                            .redirectLink(URI.REGISTRATION_VERIFICATION.getUri()+url).build();
+            emailService.sendRegistrationEmailVerification(emailVerificationDTO);
+        });
+        response.put("message", message);
+        return ResponseHandler.generateResponse(message, HttpStatus.ACCEPTED, response);
     }
 
-    //DONE
+    @GetMapping("/register/activate/{link}")
+    public ResponseEntity<Object> handleCompleteRegister(@PathVariable String link){
+        Map<String, Object> response = new HashMap<>();
+        String message = "";
+        UserRegisterInfoDTO registerCache = emailAuthenticationProvider.getRegisterCacheFromURI(link);
+        if(registerCache == null ){
+            message = "The registration verification link is no longer valid.";
+            response.put("message", message);
+            return  ResponseHandler.generateResponse(message, HttpStatus.UNAUTHORIZED, response);
+        }
+        else{
+            message = String.format("This account under the name of %s has been successfully activated",
+                    registerCache.getName());
+            response.put("message", message);
+            emailAuthenticationProvider.removeRegisterURI(link);
+            authService.register(registerCache);
+            return  ResponseHandler.generateResponse(message, HttpStatus.ACCEPTED, response);
+        }
+    }
     @PostMapping("/change-password")
     public  ResponseEntity<Object>
     postChangePassword(@RequestBody ChangePasswordInfoDTO info){
@@ -198,6 +187,5 @@ public class AuthController {
         }
         return null;
     }
-
 }
 

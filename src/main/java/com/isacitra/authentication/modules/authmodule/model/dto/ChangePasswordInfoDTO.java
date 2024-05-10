@@ -11,5 +11,4 @@ public class ChangePasswordInfoDTO implements Serializable {
     private String identifier;
     private String password;
     private String passwordConfirmation;
-
 }

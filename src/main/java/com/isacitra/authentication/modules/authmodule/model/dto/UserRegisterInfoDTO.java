@@ -10,10 +10,8 @@ import java.io.Serializable;
 @Setter
 @Builder
 public class UserRegisterInfoDTO implements Serializable {
-    private String username;
     private String password;
     private String passwordConfirmation;
     private String email;
     private String name;
-    private String photoProfile;
 }

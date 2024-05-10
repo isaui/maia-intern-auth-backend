@@ -16,6 +16,10 @@ public class TokenInfoDTO implements Serializable {
         this.token = token;
         this.isAuthenticated = false;
     }
+    public  TokenInfoDTO(String token, boolean isAuthenticated){
+        this.token = token;
+        this.isAuthenticated = isAuthenticated;
+    }
     public static class TokenInfoDTOBuilder {
         private String token;
         private boolean isAuthenticated;
@@ -31,7 +35,7 @@ public class TokenInfoDTO implements Serializable {
         }
 
         public TokenInfoDTO build() {
-            return new TokenInfoDTO(token);
+            return new TokenInfoDTO(token, isAuthenticated);
         }
     }
 

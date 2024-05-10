@@ -4,17 +4,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serializable;
-
 @Getter
 @Setter
 @Builder
-public class EmailVerificationDTO implements Serializable {
+public class RegisterEmailVerificationDTO {
     private String recipientEmail;
-    private String token;
-    private String content;
-    private String subject;
     private String name;
+    private String identifier;
     private String redirectLink;
-    private String buttonTitle;
 }

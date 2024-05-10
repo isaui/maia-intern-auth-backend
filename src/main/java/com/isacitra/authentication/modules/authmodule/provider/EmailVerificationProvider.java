@@ -5,6 +5,7 @@ import com.isacitra.authentication.common.enums.RedisConstants;
 import com.isacitra.authentication.modules.authmodule.model.dto.TokenInfoDTO;
 import com.isacitra.authentication.common.provider.RedisProvider;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.isacitra.authentication.modules.authmodule.model.dto.UserRegisterInfoDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +32,36 @@ public class EmailVerificationProvider {
             throw new RuntimeException(e);
         }
         return token;
+    }
+
+    public  String createRegisterURI(UserRegisterInfoDTO registerInfo){
+        String identifier =  UUID.randomUUID().toString();
+        String key = generateKey(EmailVerificationType.REGISTER.getType(), identifier);
+        try {
+            redisProvider.getRedisTemplate().opsForValue().set(key,
+                    redisProvider.getObjectMapper().writeValueAsString
+                            (registerInfo), RedisProvider.getEmailExpirationTimeMs(), TimeUnit.MILLISECONDS);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return identifier;
+    }
+
+    public void removeRegisterURI(String url){
+        redisProvider.revoke(generateKey(EmailVerificationType.REGISTER.getType(), url));
+    }
+
+    public  UserRegisterInfoDTO getRegisterCacheFromURI(String url){
+        String key = generateKey(EmailVerificationType.REGISTER.getType(), url);
+        String value = redisProvider.get(key);
+        if(value == null){
+            return  null;
+        }
+        try {
+            return redisProvider.getObjectMapper().readValue(value, UserRegisterInfoDTO.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private String generateKey(String type, String identifier){

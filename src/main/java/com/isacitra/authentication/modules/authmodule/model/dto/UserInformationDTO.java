@@ -11,12 +11,6 @@ import java.io.Serializable;
 @Builder
 public class UserInformationDTO implements Serializable {
     private Long userId;
-    private String username;
-    private String selfDescription;
     private String email;
-    private String profilePhoto;
     private String name;
-
-
-
 }
