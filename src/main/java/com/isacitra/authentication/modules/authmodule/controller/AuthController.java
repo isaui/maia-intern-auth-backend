@@ -123,6 +123,8 @@ public class AuthController {
                             .token(emailAuthenticationProvider.
                                     createEmailAuthenticationToken(
                                             requestBody.get("type").asText(),email))
+                            .redirectLink("redirectLink")
+                            .buttonTitle("buttonTitle")
                             .name(requestBody.get("name").asText())
                             .build()
             );
