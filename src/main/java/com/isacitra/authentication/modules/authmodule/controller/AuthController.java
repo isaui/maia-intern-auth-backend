@@ -67,6 +67,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<Object> postLogin(@RequestBody UserLoginInfoDTO info) {
         Map<String, Object> data = new HashMap<>();
+        System.out.println(info.getIdentifier()+ " " + info.getPassword());
         try{
             data.put("token", getToken(info.getIdentifier(), info.getPassword()));
             return ResponseHandler.

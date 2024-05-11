@@ -78,6 +78,6 @@ public class AuthServiceImpl implements AuthService {
         checkIsAlreadyExist(info.getEmail());
         AuthUser user = AuthUser.fromUserRegisterInfo(info);
         user.setPassword(AuthProvider.getInstance().encode(user.getPassword())); // Bcrypt
-        return repository.save(AuthUser.fromUserRegisterInfo(info));
+        return repository.save(user);
     }
 }
