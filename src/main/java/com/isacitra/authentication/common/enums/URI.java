@@ -1,7 +1,7 @@
 package com.isacitra.authentication.common.enums;
 
 public enum URI {
-    REGISTRATION_VERIFICATION("https://maia-authentication-isacitra-fr.up.railway/");
+    REGISTRATION_VERIFICATION("https://maia-authentication-isacitra-fr.up.railway/signup/verify/");
     private final String uri;
 
     URI(String uri) {
