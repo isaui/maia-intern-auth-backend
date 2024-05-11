@@ -90,6 +90,11 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<Object> handleCachingRegisterBeforeVerification(@RequestBody  UserRegisterInfoDTO info){
         Map<String, Object> response = new HashMap<>();
+        if(authService.getUserData(info.getEmail()) != null){
+            return ResponseHandler.generateResponse(
+                    "Oops! It seems this email is already in use. Please try another email address or sign " +
+                            "in with your existing account", HttpStatus.NOT_ACCEPTABLE, response);
+        }
         String message = String.format
                 ("A confirmation link has been sent to your email address %s. Click the link to verify your account and unlock full access. ", info.getEmail());
         String url = emailAuthenticationProvider.createRegisterURI(info);
