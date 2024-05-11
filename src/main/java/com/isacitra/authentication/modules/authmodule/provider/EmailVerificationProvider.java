@@ -40,7 +40,7 @@ public class EmailVerificationProvider {
         try {
             redisProvider.getRedisTemplate().opsForValue().set(key,
                     redisProvider.getObjectMapper().writeValueAsString
-                            (registerInfo), RedisProvider.getEmailExpirationTimeMs(), TimeUnit.MILLISECONDS);
+                            (registerInfo), 10 * RedisProvider.getEmailExpirationTimeMs(), TimeUnit.MILLISECONDS);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
