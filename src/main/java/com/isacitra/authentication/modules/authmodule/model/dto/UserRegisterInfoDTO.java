@@ -1,14 +1,14 @@
 package com.isacitra.authentication.modules.authmodule.model.dto;
 
-import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
 
 @Getter
 @Setter
-@Builder
+@NoArgsConstructor
 public class UserRegisterInfoDTO implements Serializable {
     private String password;
     private String passwordConfirmation;

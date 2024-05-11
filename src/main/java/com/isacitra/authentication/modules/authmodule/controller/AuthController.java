@@ -1,6 +1,6 @@
 package com.isacitra.authentication.modules.authmodule.controller;
 
-import com.isacitra.authentication.common.enums.EmailVerificationType;
+import com.isacitra.authentication.common.enums.EmailVerificationConstants;
 import com.isacitra.authentication.common.enums.URI;
 import com.isacitra.authentication.modules.authmodule.model.AuthUser;
 import com.isacitra.authentication.modules.authmodule.model.dto.*;
@@ -55,7 +55,7 @@ public class AuthController {
         if(existEmail != null){
             redisProvider.revoke(key);
             AuthUser authUser = authService.getUserData(existEmail);
-            data.put("token",jwtProvider.createAuthenticationTokenForUser(authUser.toUserInformationDTO()));
+            data.put("token",getToken(authUser.toUserInformationDTO()));
             return ResponseHandler.generateResponse("Session berhasil diperbarui",
                     HttpStatus.ACCEPTED, data);
         }
@@ -85,6 +85,9 @@ public class AuthController {
     private String getToken(String identifier, String password){
         return jwtProvider.createAuthenticationTokenForUser
                 (authService.authenticate(identifier, password).toUserInformationDTO());
+    }
+    private String getToken(UserInformationDTO information){
+        return jwtProvider.createAuthenticationTokenForUser(information);
     }
 
     @PostMapping("/register")
@@ -126,14 +129,16 @@ public class AuthController {
                     registerCache.getName());
             response.put("message", message);
             emailAuthenticationProvider.removeRegisterURI(link);
-            authService.register(registerCache);
+            AuthUser user = authService.register(registerCache);
+            response.put("userInformation", user.toUserInformationDTO());
+            response.put("token", getToken(user.toUserInformationDTO()));
             return  ResponseHandler.generateResponse(message, HttpStatus.ACCEPTED, response);
         }
     }
     @PostMapping("/change-password")
     public  ResponseEntity<Object>
     postChangePassword(@RequestBody ChangePasswordInfoDTO info){
-        boolean isEmailVerified = emailAuthenticationProvider.isEmailVerified(EmailVerificationType.CHANGE_PASS.getType(),
+        boolean isEmailVerified = emailAuthenticationProvider.isEmailVerified(EmailVerificationConstants.CHANGE_PASS.getType(),
                 info.getIdentifier());
         try{
             if(isEmailVerified){
