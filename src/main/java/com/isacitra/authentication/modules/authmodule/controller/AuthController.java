@@ -1,5 +1,6 @@
 package com.isacitra.authentication.modules.authmodule.controller;
 
+import com.isacitra.authentication.common.config.RateLimitingConfig;
 import com.isacitra.authentication.common.enums.EmailVerificationConstants;
 import com.isacitra.authentication.common.enums.URI;
 import com.isacitra.authentication.modules.authmodule.model.AuthUser;
@@ -11,6 +12,8 @@ import com.isacitra.authentication.modules.authmodule.service.AuthService;
 import com.isacitra.authentication.modules.authmodule.service.EmailServiceImpl;
 import com.isacitra.authentication.common.util.ResponseHandler;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,8 +41,12 @@ public class AuthController {
     private JwtProvider jwtProvider;
     @Autowired private EmailVerificationProvider emailAuthenticationProvider;
     @Autowired private RedisProvider redisProvider;
+    private final Bucket loginBucket;
+    private final Bucket registerBucket;
 
     AuthController(){
+        this.loginBucket = RateLimitingConfig.createLoginBucket();
+        this.registerBucket = RateLimitingConfig.createRegisterBucket();
     }
 
     @PostMapping("/refresh-token")
@@ -91,24 +98,23 @@ public class AuthController {
     }
 
 
-
-
     @PostMapping("/login")
     public ResponseEntity<Object> postLogin(@RequestBody UserLoginInfoDTO info) {
         Map<String, Object> data = new HashMap<>();
-        System.out.println(info.getIdentifier()+ " " + info.getPassword());
-        try{
-            data.put("token", getToken(info.getIdentifier(), info.getPassword()));
-            return ResponseHandler.
-                    generateResponse("Berhasil login", HttpStatus.ACCEPTED, data);
-
-        }catch (NoSuchElementException exception){
-            return ResponseHandler.
-                    generateResponse("user tidak ditemukan!", HttpStatus.NOT_FOUND, data);
-
-        } catch (IllegalArgumentException exception){
-            return  ResponseHandler.generateResponse("password yang dimasukkan salah!",
-                    HttpStatus.UNAUTHORIZED, data);
+        ConsumptionProbe probe = loginBucket.tryConsumeAndReturnRemaining(1);
+        if (probe.isConsumed()) {
+            try {
+                data.put("token", getToken(info.getIdentifier(), info.getPassword()));
+                return ResponseHandler.generateResponse("Berhasil login", HttpStatus.ACCEPTED, data);
+            } catch (NoSuchElementException exception) {
+                return ResponseHandler.generateResponse("User tidak ditemukan!", HttpStatus.NOT_FOUND, data);
+            } catch (IllegalArgumentException exception) {
+                return ResponseHandler.generateResponse("Password yang dimasukkan salah!", HttpStatus.UNAUTHORIZED, data);
+            }
+        } else {
+            System.out.println("bucket sudah habis");
+            return ResponseHandler.generateResponse("Batas percobaan login telah tercapai. " +
+                    "Silakan coba lagi nanti.", HttpStatus.TOO_MANY_REQUESTS, data);
         }
     }
 
@@ -123,6 +129,12 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<Object> handleCachingRegisterBeforeVerification(@RequestBody  UserRegisterInfoDTO info){
         Map<String, Object> response = new HashMap<>();
+        ConsumptionProbe probe = registerBucket.tryConsumeAndReturnRemaining(1);
+        if(! probe.isConsumed()){
+            System.out.println("bucket sudah habis");
+            return ResponseHandler.generateResponse("Batas percobaan registrasi telah tercapai. Silakan coba lagi nanti.",
+                    HttpStatus.TOO_MANY_REQUESTS, new HashMap<>());
+        }
         if(authService.getUserData(info.getEmail()) != null){
             return ResponseHandler.generateResponse(
                     "Oops! It seems this email is already in use. Please try another email address or sign " +
@@ -131,7 +143,6 @@ public class AuthController {
         String message = String.format
                 ("A confirmation link has been sent to your email address %s. Click the link to verify your account and unlock full access. ", info.getEmail());
         String url = emailAuthenticationProvider.createRegisterURI(info);
-        System.out.println(info.getPassword());
         CompletableFuture.runAsync(()->{
             RegisterEmailVerificationDTO emailVerificationDTO =
                     RegisterEmailVerificationDTO.builder()

@@ -26,6 +26,7 @@ extra["springModulithVersion"] = "1.1.2"
 
 dependencies {
 	implementation("org.yaml:snakeyaml:1.29")
+	implementation("com.bucket4j:bucket4j-core:8.1.0")
 	implementation("org.apache.commons:commons-pool2:2.11.1")
 	implementation ("org.apache.logging.log4j:log4j-slf4j-impl:2.14.1")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -44,8 +45,6 @@ dependencies {
 	implementation("org.springframework.kafka:spring-kafka")
 	implementation("org.springframework.modulith:spring-modulith-starter-core")
 	implementation("org.springframework.modulith:spring-modulith-starter-jpa")
-	//implementation("org.springframework.session:spring-session-jdbc")
-	implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
 	implementation("io.jsonwebtoken:jjwt-api:0.11.2")
     implementation("io.jsonwebtoken:jjwt-impl:0.11.2")
     implementation("io.jsonwebtoken:jjwt-jackson:0.11.2")
