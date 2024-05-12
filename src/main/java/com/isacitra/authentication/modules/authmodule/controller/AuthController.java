@@ -43,19 +43,16 @@ public class AuthController {
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<Object> refreshToken(HttpServletRequest request){
+    public ResponseEntity<Object> refreshToken(@RequestHeader Map<String, String> headers){
         Map<String, Object> data = new HashMap<>();
-        String token = extractTokenFromHeader(request.getHeader("Authorization"));
+        String token = extractTokenFromHeader(headers.get("Authorization"));
         if(token == null){
             return  ResponseHandler.generateResponse("Tidak ada token",
                     HttpStatus.BAD_REQUEST, data);
         }
-        String key = jwtProvider.generateKeyAuthentication(token);
-        String existEmail = redisProvider.get(key);
-        if(existEmail != null){
-            redisProvider.revoke(key);
-            AuthUser authUser = authService.getUserData(existEmail);
-            data.put("token",getToken(authUser.toUserInformationDTO()));
+        String newToken = generateRefreshToken(token);
+        if(newToken != null){
+            data.put("token",newToken);
             return ResponseHandler.generateResponse("Session berhasil diperbarui",
                     HttpStatus.ACCEPTED, data);
         }
@@ -63,6 +60,38 @@ public class AuthController {
             return ResponseHandler.generateResponse("Session habis", HttpStatus.UNAUTHORIZED, data);
         }
     }
+
+    private String generateRefreshToken(String token){
+        String key = jwtProvider.generateKeyAuthentication(token);
+        String existEmail = redisProvider.get(key);
+        if(existEmail == null){
+            return  null;
+        }
+        redisProvider.revoke(key);
+        AuthUser authUser = authService.getUserData(existEmail);
+        if(authUser == null){
+            return  null;
+        }
+        return getToken(authUser.toUserInformationDTO());
+
+    }
+
+    @GetMapping("/userdata")
+    public ResponseEntity<Object> getUserData(@RequestHeader Map<String, String> headers){
+        Map<String, Object> data = new HashMap<>();
+        String token = extractTokenFromHeader(headers.get("Authorization"));
+        token = generateRefreshToken(token);
+        if(token == null){
+            return ResponseHandler.generateResponse("Session habis", HttpStatus.UNAUTHORIZED, new HashMap<>());
+        }
+        String email = redisProvider.get(jwtProvider.generateKeyAuthentication(token));
+        data.put("token", token);
+        data.put("userInformation", authService.getUserData(email).toUserInformationDTO());
+        return ResponseHandler.generateResponse("berhasil mendapatkan data user", HttpStatus.ACCEPTED, data);
+    }
+
+
+
 
     @PostMapping("/login")
     public ResponseEntity<Object> postLogin(@RequestBody UserLoginInfoDTO info) {
@@ -102,6 +131,7 @@ public class AuthController {
         String message = String.format
                 ("A confirmation link has been sent to your email address %s. Click the link to verify your account and unlock full access. ", info.getEmail());
         String url = emailAuthenticationProvider.createRegisterURI(info);
+        System.out.println(info.getPassword());
         CompletableFuture.runAsync(()->{
             RegisterEmailVerificationDTO emailVerificationDTO =
                     RegisterEmailVerificationDTO.builder()
