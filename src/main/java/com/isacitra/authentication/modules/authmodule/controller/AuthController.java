@@ -45,7 +45,7 @@ public class AuthController {
     @PostMapping("/refresh-token")
     public ResponseEntity<Object> refreshToken(@RequestHeader Map<String, String> headers){
         Map<String, Object> data = new HashMap<>();
-        String token = extractTokenFromHeader(headers.get("Authorization"));
+        String token = extractTokenFromHeader(headers.get("authorization"));
         if(token == null){
             return  ResponseHandler.generateResponse("Tidak ada token",
                     HttpStatus.BAD_REQUEST, data);
@@ -79,7 +79,7 @@ public class AuthController {
     @GetMapping("/userdata")
     public ResponseEntity<Object> getUserData(@RequestHeader Map<String, String> headers){
         Map<String, Object> data = new HashMap<>();
-        String token = extractTokenFromHeader(headers.get("Authorization"));
+        String token = extractTokenFromHeader(headers.get("authorization"));
         token = generateRefreshToken(token);
         if(token == null){
             return ResponseHandler.generateResponse("Session habis", HttpStatus.UNAUTHORIZED, new HashMap<>());

@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class RedisProvider {
 
-    private static final long EXPIRATION_TIME_MS = 60 * 60 * 1000;
+    private static final long EXPIRATION_TIME_MS = 20 * 60 * 1000;
     private  static  final  long EMAIL_EXPIRATION_TIME_MS = 60 * 1000;
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
